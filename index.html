@@ -600,7 +600,7 @@
             <span class="pill" id="pillArchivo">Pendiente</span>
           </button>
           <div class="acordeon-body">
-            <label for="excelFile">Archivo de carga 2: Llamados de atención (XLS / XLSX)</label>
+            <label for="excelFile">Archivo de carga 2: Reporte de Juicios de Evaluacion</label>
             <input type="file" id="excelFile" accept=".xls,.xlsx" />
             <div class="row" style="margin-top:10px;">
               <button class="btn" id="btnProcesar" disabled>Procesar archivo</button>
@@ -1276,9 +1276,11 @@ $("notaArchivo").textContent = state.groupName
       const n = selKeys.length;
       setPill("pillSeleccion", `${n} seleccionados`, n>0 ? "ok" : undefined);
       setPill("pillDetalle", n>0 ? `Listo (${n})` : "Pendiente", n>0 ? "ok" : "warn");
-      $("btnGenerar").disabled = (n === 0 || !state.instructor || !state.ambiente);
+      const btnReady = (n > 0 && state.instructor && state.ambiente);
+      $("btnGenerar").disabled = !btnReady;
       if($("btnGenerarPorAprendiz")){
-        $("btnGenerarPorAprendiz").disabled = (n === 0 || !state.instructor || !state.ambiente);
+        const multiAprEnabled = n > 1 && state.instructor && state.ambiente;
+        $("btnGenerarPorAprendiz").disabled = !multiAprEnabled;
       }
       const btnDetalles = $("btnCargarDetalles");
       if(btnDetalles){
