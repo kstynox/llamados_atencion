@@ -529,6 +529,77 @@
       margin:12px 0;
     }
 
+    .app-footer{
+      margin:32px auto 0;
+      max-width:560px;
+      padding:0 14px 40px;
+      text-align:center;
+    }
+    .app-footer-card{
+      background:#fff;
+      border-radius:28px;
+      box-shadow:0 15px 30px rgba(15,23,42,.12);
+      padding:22px 26px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      border:1px solid rgba(15,23,42,.05);
+    }
+    .footer-label{
+      font-size:10px;
+      letter-spacing:0.2em;
+      text-transform:uppercase;
+      color:#9ca3af;
+    }
+    .footer-body{
+      background:linear-gradient(135deg,#f8fafc,#e2e8f0);
+      border-radius:22px;
+      padding:14px 18px;
+      display:flex;
+      align-items:center;
+      gap:14px;
+      justify-content:space-between;
+      border:1px solid rgba(15,23,42,.08);
+    }
+    .footer-icon{
+      width:42px;
+      height:42px;
+      border-radius:50%;
+      background:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      box-shadow:0 4px 10px rgba(0,0,0,.08);
+      font-weight:700;
+      color:#0f5f1d;
+    }
+    .footer-main{
+      text-align:left;
+      flex:1;
+    }
+    .footer-main .title{
+      font-weight:900;
+      font-size:14px;
+      color:#0f4b2c;
+      margin-bottom:2px;
+    }
+    .footer-main .name{
+      font-size:13px;
+      font-weight:600;
+      color:#0f172a;
+    }
+    .footer-badge{
+      width:28px;
+      height:28px;
+      border-radius:50%;
+      background:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border:1px solid rgba(15,23,42,.08);
+      box-shadow:0 3px 8px rgba(15,23,42,.12);
+    }
+
     /* =========================
        Overlay inicio (Instructor y Ambiente)
        ========================= */
@@ -889,6 +960,26 @@
     </div>
   </div>
 
+  <footer class="app-footer">
+    <div class="app-footer-card">
+      <div class="footer-label">Diseño y desarrollo</div>
+      <div class="footer-body">
+        <span class="footer-icon">✕</span>
+        <div class="footer-main">
+          <div class="title">Instructor diseñador</div>
+          <div class="name">Yeison Castellanos Gordillo</div>
+        </div>
+        <div class="footer-badge">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0f5f1d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="6"></circle>
+            <path d="M16 16l5 5"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+ 
   <script>
     // =========================
     // Estado
