@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SENA 360 – Llamados de Atención</title>
 
-  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -794,7 +794,7 @@
   <div id="startOverlay">
     <div id="startCard" class="card start-card">
       <div class="start-card-header">
-        <img src="https://www.sena.edu.co/Style%20Library/alayout/images/logoSena.png" alt="Logo SENA" class="start-card-logo">
+        <img src="https://www.sena.edu.co/Style%20Library/alayout/images/logoSena.png" alt="Logo SENA" class="start-card-logo" decoding="async">
         <div>
           <h2>Llamados de Atención</h2>
           <p class="start-card-sub">Ingresa instructor y ambiente para comenzar el flujo.</p>
@@ -823,7 +823,7 @@
   <header>
     <div class="header-content">
       <div class="header-left">
-        <img src="https://www.sena.edu.co/Style%20Library/alayout/images/logoSena.png" alt="Logo SENA">
+        <img src="https://www.sena.edu.co/Style%20Library/alayout/images/logoSena.png" alt="Logo SENA" decoding="async">
         <div class="header-left-text">Servicio Nacional de Aprendizaje - SENA Regional Tolima</div>
       </div>
       <div class="header-center">Llamados de Atención</div>
@@ -986,6 +986,7 @@
     // =========================
     const state = {
       groupName: "",
+      noFicha: "",
     fechaHoy: "",
     fechaHoyIso: "",
       aprendices: [], // {key, nombre, documento, estadoNorm, estadoRaw}
@@ -1063,6 +1064,25 @@ Rehacer el trabajo/plagio desde cero, con citas correctas y originalidad.`
       const mm = String(d.getMonth()+1).padStart(2,"0");
       const dd = String(d.getDate()).padStart(2,"0");
       return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function todayYYYYMMDD(){
+      const d = new Date();
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth()+1).padStart(2,"0");
+      const dd = String(d.getDate()).padStart(2,"0");
+      return `${yyyy}${mm}${dd}`;
+    }
+
+    function normalizeFileNamePart(value){
+      const str = (value ?? "").toString().trim();
+      if(!str) return "";
+      return str
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-zA-Z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "")
+        .replace(/_+/g, "_");
     }
 
     function nowDateTimeLocal(){
@@ -1333,6 +1353,7 @@ Rehacer el trabajo/plagio desde cero, con citas correctas y originalidad.`
         const ws = wb.Sheets[sheetName];
 
         state.groupName = (ws["C6"] && ws["C6"].v) ? ws["C6"].v.toString().trim() : "";
+        state.noFicha = (ws["C3"] && ws["C3"].v) ? ws["C3"].v.toString().trim() : "";
         state.fechaHoy = todayDDMMYYYY();
         state.fechaHoyIso = todayISO();
 
@@ -2263,11 +2284,15 @@ $("notaArchivo").textContent = state.groupName
       const mapApr = getAprMap();
       const pages = selKeys.map(k => buildPagesForApr(k, mapApr)).join("");
 
+      const fechaYMD = todayYYYYMMDD();
+      const ficha = normalizeFileNamePart(state.noFicha || "SIN_FICHA");
+      const fileTitle = `LLA_${fechaYMD}_${ficha}`;
+
       const htmlPrint = `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <title>Llamados de Atención</title>
+  <title>${escapeHtml(fileTitle)}</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>${getPrintCss()}</style>
 </head>
@@ -2292,7 +2317,7 @@ $("notaArchivo").textContent = state.groupName
       toggleAccordion("accDetalle", false);
     });
 
-    $("btnGenerarPorAprendiz").addEventListener("click", () => {
+$("btnGenerarPorAprendiz").addEventListener("click", () => {
       hideAlert();
 
       if(!state.instructor || !state.ambiente){
@@ -2306,17 +2331,24 @@ $("notaArchivo").textContent = state.groupName
       }
 
       const mapApr = getAprMap();
-      const fecha = state.fechaHoy || todayDDMMYYYY();
+      const fechaYMD = todayYYYYMMDD();
+      const ficha = normalizeFileNamePart(state.noFicha || "SIN_FICHA");
 
-      for(let i = 0; i < selKeys.length; i++){
-        const key = selKeys[i];
-        const ap = mapApr[key];
-        if(!ap) continue;
-        const pages = buildPagesForApr(key, mapApr);
-        if(!pages) continue;
+      // Advertencia: esta opción abre una ventana por aprendiz
+      showAlert("Advertencia: esta opción abre una ventana por aprendiz. Si no se abren, habilite las ventanas emergentes (pop-ups) para este sitio desde el icono de candado/ajustes en la barra de direcciones y vuelva a intentar.");
 
-        const fileTitle = `Llamado de atencion_${ap.nombre || "Aprendiz"}_${fecha}`;
-        const htmlPrint = `<!DOCTYPE html>
+      // Dar tiempo a que el mensaje se renderice antes de abrir ventanas
+      setTimeout(() => {
+        for(let i = 0; i < selKeys.length; i++){
+          const key = selKeys[i];
+          const ap = mapApr[key];
+          if(!ap) continue;
+          const pages = buildPagesForApr(key, mapApr);
+          if(!pages) continue;
+
+          const aprName = normalizeFileNamePart(ap.nombre || "Aprendiz");
+          const fileTitle = `LLA_${fechaYMD}_${ficha}_${aprName}`;
+          const htmlPrint = `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="utf-8" />
@@ -2332,20 +2364,21 @@ $("notaArchivo").textContent = state.groupName
 </body>
 </html>`;
 
-        const w = window.open("", `_blank_${key}_${i}`);
-        if(!w){
-          showAlert("El navegador bloqueó una ventana emergente. Permita pop-ups para generar los PDFs por aprendiz.");
-          return;
+          const w = window.open("", `_blank_${key}_${i}`);
+          if(!w){
+            showAlert("El navegador bloqueó una ventana emergente. Permita pop-ups para generar los PDFs por aprendiz.");
+            return;
+          }
+          w.document.open();
+          w.document.write(htmlPrint);
+          w.document.close();
         }
-        w.document.open();
-        w.document.write(htmlPrint);
-        w.document.close();
-      }
+      }, 80);
 
       toggleAccordion("accDetalle", false);
     });
 
-    function getPrintCss(){
+function getPrintCss(){
       return `
 @page { size: A4; margin: 12mm; }
 *{ box-sizing:border-box; }
@@ -2362,32 +2395,84 @@ body{ margin:0; font-family: Inter, Arial, sans-serif; color:#000; }
 .pdf-logo{ height:12mm; width:auto; display:block; margin:0 auto 4mm auto; }
 .pdf-center{ font-size:12px; font-weight:700; line-height:1.15; margin-bottom:4mm; text-align:center; display:block; width:100%; }
 .pdf-title{ font-size:10px; font-weight:900; letter-spacing:0.02em; margin:0 0 6mm 0; text-transform:uppercase; }
-.pdf-fields{ font-size:11.5px; line-height:1.25; margin-bottom:5mm; display:flex; flex-direction:column; gap:2mm; }
-    .pdf-fields .rowline{ display:flex; flex-wrap:wrap; gap:8mm; margin-bottom:2mm; }
-    .pdf-fields .rowline > div{ flex:1; min-width:80mm; }
-    .pdf-fields .rowline.rowline--header{
-      flex-wrap:nowrap;
-      gap:5mm;
-      align-items:flex-start;
-    }
-    .pdf-fields .rowline.rowline--header > div{
-      min-width:auto;
-      flex:1;
-    }
-    .pdf-fields .rowline.rowline--header .rowline-date{
-      flex:0 0 auto;
-      min-width:120px;
-      text-align:right;
-    }
-    .pdf-fields .rowline.rowline--header .rowline-group{
-      flex:2 1 60%;
-    }
-    .pdf-fields .rowline.rowline--header .rowline-place{
-      flex:1 1 25%;
-    }
-    .pdf-fields .rowline.rowline--names > div{
-      flex:1 1 100%;
-    }
+.pdf-fields{
+  font-size:11.5px;
+  line-height:1.0; /* Interlineado sencillo */
+  margin-bottom:4mm;
+  display:flex;
+  flex-direction:column;
+  gap:1mm; /* Posterior 0 (sin espacio extra) */
+}
+.pdf-fields .rowline{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6mm;
+  margin:0;
+  align-items:baseline;
+}
+.pdf-fields .rowline > div{
+  flex:1 1 auto;
+  min-width:0; /* permite que el texto reduzca/recorte sin saltar de línea */
+}
+.pdf-fields strong{ font-weight:900; }
+
+/* 1) Primera fila: GRUPO / FICHA / LUGAR / FECHA (1 sola línea) */
+.pdf-fields .rowline.rowline--header4{
+  flex-wrap:nowrap;
+  gap:4mm;
+}
+.pdf-fields .rowline.rowline--header4 .h-group{
+  flex: 3 1 auto;      /* ocupa más ancho */
+  min-width:0;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.pdf-fields .rowline.rowline--header4 .h-ficha{
+  flex: 0 0 auto;
+  white-space:nowrap;
+}
+.pdf-fields .rowline.rowline--header4 .h-lugar{
+  flex: 0 0 auto;
+  white-space:nowrap;
+}
+.pdf-fields .rowline.rowline--header4 .h-fecha{
+  flex: 0 1 auto;
+  white-space:nowrap;
+  margin-left:auto;
+  text-align:right;    /* FECHA alineada a la derecha */
+}
+
+/* 2) Segunda fila: NOMBRES y DOCUMENTO (1 sola línea) */
+.pdf-fields .rowline.rowline--names2{
+  flex-wrap:nowrap;
+  gap:4mm;
+}
+.pdf-fields .rowline.rowline--names2 .nombres{
+  flex:1 1 auto;
+  min-width:0;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.pdf-fields .rowline.rowline--names2 .doc{
+  flex:0 0 auto;
+  white-space:nowrap;
+  margin-left:auto;
+  text-align:right;
+}
+
+/* Compatibilidad con estilos anteriores (no usados en este template, pero se dejan por seguridad) */
+.pdf-fields .rowline.rowline--header{
+  flex-wrap:nowrap;
+  gap:5mm;
+  align-items:flex-start;
+}
+.pdf-fields .rowline.rowline--header > div{ min-width:auto; flex:1; }
+.pdf-fields .rowline.rowline--header .rowline-date{ flex:0 0 auto; min-width:120px; text-align:right; }
+.pdf-fields .rowline.rowline--header .rowline-group{ flex:2 1 60%; }
+.pdf-fields .rowline.rowline--header .rowline-place{ flex:1 1 25%; }
+.pdf-fields .rowline.rowline--names > div{ flex:1 1 100%; }
 .pdf-fields strong{ font-weight:900; }
 .pdf-section-title{ font-size:12px; font-weight:900; margin:0 0 1mm 0; text-transform:uppercase; }
 .pdf-text{ font-size:10.8px; line-height:1.35; white-space:pre-wrap; margin-top:2mm; }
@@ -2461,10 +2546,11 @@ body{ margin:0; font-family: Inter, Arial, sans-serif; color:#000; }
       const planText = buildPlanText(apKey, reasons);
 
       const grupo = state.groupName ? state.groupName : "N/A";
+      const fichaRaw = state.noFicha ? state.noFicha : "N/A";
       const lugar = state.ambiente || "N/A";
       const fecha = state.fechaHoy || todayDDMMYYYY();
       const fechaIso = state.fechaHoyIso || todayISO();
-      const fechaLong = formatLongDateFromIso(todayISO());
+      const fechaLong = formatLongDateFromIso(fechaIso);
       const doc = ap.documento || "N/A";
 
       const observaciones = state.detalle[apKey].observaciones || "";
@@ -2481,17 +2567,19 @@ body{ margin:0; font-family: Inter, Arial, sans-serif; color:#000; }
       return `
 <div class="${pageClass}">
   <div class="pdf-header">
-    <img class="pdf-logo" src="https://www.sena.edu.co/Style%20Library/alayout/images/logoSena.png" alt="Logo SENA">
+    <img class="pdf-logo" src="https://www.sena.edu.co/Style%20Library/alayout/images/logoSena.png" alt="Logo SENA" decoding="async">
     <div class="pdf-center">Centro Comercio y Servicios<br>Regional Tolima<br>LLAMADO DE ATENCION</div>
   </div>
   <div class="pdf-fields">
-    <div class="rowline rowline--header">
-      <div class="rowline-group"><strong>GRUPO:</strong> ${escapeHtml(grupo)}</div>
-      <div class="rowline-place"><strong>LUGAR:</strong> ${escapeHtml(lugar)}</div>
-      <div class="rowline-date"><strong>Fecha:</strong> ${escapeHtml(fechaLong)}</div>
+    <div class="rowline rowline--header4">
+      <div class="h-group"><strong>GRUPO:</strong> ${escapeHtml(grupo)}</div>
+      <div class="h-ficha"><strong>FICHA:</strong> ${escapeHtml(fichaRaw)}</div>
+      <div class="h-lugar"><strong>LUGAR:</strong> ${escapeHtml(lugar)}</div>
+      <div class="h-fecha"><strong>FECHA:</strong> ${escapeHtml(fechaLong)}</div>
     </div>
-    <div class="rowline rowline--names">
-      <div><strong>NOMBRES Y APELLIDOS:</strong> ${escapeHtml(ap.nombre)} &nbsp;&nbsp; <strong>Documento:</strong> ${escapeHtml(doc)}</div>
+    <div class="rowline rowline--names2">
+      <div class="nombres"><strong>NOMBRES Y APELLIDOS:</strong> ${escapeHtml(ap.nombre)}</div>
+      <div class="doc"><strong>DOCUMENTO:</strong> ${escapeHtml(doc)}</div>
     </div>
   </div>
 
@@ -2658,4 +2746,3 @@ body{ margin:0; font-family: Inter, Arial, sans-serif; color:#000; }
   </script>
 </body>
 </html>
-
